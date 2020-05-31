@@ -27,21 +27,20 @@ public class Main extends Application {
     ArrayList<Rectangle> shots = new ArrayList <> (  );
     boolean left,right,space;
     double time;
+    double enemyTime;
 
     AnimationTimer animationTimer = new AnimationTimer ( ) {
         @Override
         public void handle ( long l ) {
             time += 0.1;
-//            for (Rectangle shot : shots) {
-//                shot.setLayoutY ( shot.getLayoutY () - 10 );
-//                for (Enemy enemy : enemies) {
-//                    if (shot.getBoundsInParent ().intersects ( enemy.getImageView ().getBoundsInParent () )) {
-//                        anchorPane.getChildren ( ).removeAll ( shot , enemy.getImageView () );
-//                        enemy.setDead ( true );
-//                    }
-//                }
-//                enemies.removeIf ( enemy -> enemy.isDead );
-//            }
+            enemyTime += 0.1;
+
+            if (enemyTime > 30) {
+                enemyTime = 0;
+                for (Enemy enemy : enemies) {
+                    enemy.getImageView ().setLayoutY ( enemy.getImageView ().getLayoutY () + 40 );
+                }
+            }
 
             Iterator <Rectangle> i = shots.iterator();
             Iterator <Enemy> j = enemies.iterator ();
@@ -51,7 +50,7 @@ public class Main extends Application {
                 if (shot.getLayoutY () < -100) {
                     anchorPane.getChildren ().remove ( shot );
                     i.remove ();
-
+                    continue;
                 }
                 while (j.hasNext ()) {
                     Enemy enemy = j.next ();
@@ -68,8 +67,9 @@ public class Main extends Application {
                 hero.setLayoutX ( hero.getLayoutX () - 6 );
             if (right)
                 hero.setLayoutX ( hero.getLayoutX () + 6 );
-            if (space && time > 2)
+            if (space && time > 5)
                 shoot ();
+
         }
     };
 
@@ -78,7 +78,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
 
         anchorPane = new AnchorPane (  );
-        primaryStage.setTitle("Hello World");
+        primaryStage.setTitle("Space Invaders");
         ImageView background = new ImageView ( new Image ( "/resources/background.png" ) );
         background.setPreserveRatio ( true );
         background.setFitHeight ( 1200 );
