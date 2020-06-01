@@ -1,23 +1,18 @@
 package main;
 
 import javafx.animation.AnimationTimer;
-import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class Main extends Application {
 
@@ -44,36 +39,16 @@ public class Main extends Application {
                 }
             }
 
-//            Iterator <Rectangle> i = shots.iterator();
-//            Iterator <Enemy> j = enemies.iterator ();
-//            while (i.hasNext()) {
-//                Rectangle shot = i.next();
-//                shot.setLayoutY ( shot.getLayoutY () - 10 );
-//                if (shot.getLayoutY () < -100) {
-//                    anchorPane.getChildren ().remove ( shot );
-//                    i.remove ();
-//                    continue;
-//                }
-//                while (j.hasNext ()) {
-//                    Enemy enemy = j.next ();
-//                    if (shot.getBoundsInParent ().intersects ( enemy.getImageView ().getBoundsInParent () )) {
-//                        anchorPane.getChildren ().removeAll ( shot , enemy.getImageView () );
-//                        i.remove ();
-//                        j.remove ();
-//                        break;
-//                    }
-//                }
-//            }
-
             for (Shot shot : shots) {
                 if (!shot.isDead ()) {
                     moveShoot ( shot );
                     collisionCheck ( shot );
                 }
+                if (shot.getLayoutY () < -100)
+                    shot.setDead ();
             }
 
-
-
+            shots.removeIf ( Shot::isDead );
 
             if (left)
                 hero.setLayoutX ( hero.getLayoutX () - 6 );
