@@ -23,11 +23,12 @@ public class Main extends Application {
 
     AnchorPane anchorPane;
     ImageView hero;
-    ArrayList<Enemy> enemies = new ArrayList <> (  );
-    ArrayList<Rectangle> shots = new ArrayList <> (  );
-    boolean left,right,space;
+    Enemy[] enemies = new Enemy[54];
+    ArrayList<Shot> shots = new ArrayList <> (  );
+    boolean left,right;
     double time;
     double enemyTime;
+    int score;
 
     AnimationTimer animationTimer = new AnimationTimer ( ) {
         @Override
@@ -38,40 +39,53 @@ public class Main extends Application {
             if (enemyTime > 30) {
                 enemyTime = 0;
                 for (Enemy enemy : enemies) {
-                    enemy.getImageView ().setLayoutY ( enemy.getImageView ().getLayoutY () + 40 );
+                    if (enemy != null)
+                        enemy.setLayoutY ( enemy.getLayoutY () + 40 );
                 }
             }
 
-            Iterator <Rectangle> i = shots.iterator();
-            Iterator <Enemy> j = enemies.iterator ();
-            while (i.hasNext()) {
-                Rectangle shot = i.next();
-                shot.setLayoutY ( shot.getLayoutY () - 10 );
-                if (shot.getLayoutY () < -100) {
-                    anchorPane.getChildren ().remove ( shot );
-                    i.remove ();
-                    continue;
-                }
-                while (j.hasNext ()) {
-                    Enemy enemy = j.next ();
-                    if (shot.getBoundsInParent ().intersects ( enemy.getImageView ().getBoundsInParent () )) {
-                        anchorPane.getChildren ().removeAll ( shot , enemy.getImageView () );
-                        i.remove ();
-                        j.remove ();
-                        break;
-                    }
+//            Iterator <Rectangle> i = shots.iterator();
+//            Iterator <Enemy> j = enemies.iterator ();
+//            while (i.hasNext()) {
+//                Rectangle shot = i.next();
+//                shot.setLayoutY ( shot.getLayoutY () - 10 );
+//                if (shot.getLayoutY () < -100) {
+//                    anchorPane.getChildren ().remove ( shot );
+//                    i.remove ();
+//                    continue;
+//                }
+//                while (j.hasNext ()) {
+//                    Enemy enemy = j.next ();
+//                    if (shot.getBoundsInParent ().intersects ( enemy.getImageView ().getBoundsInParent () )) {
+//                        anchorPane.getChildren ().removeAll ( shot , enemy.getImageView () );
+//                        i.remove ();
+//                        j.remove ();
+//                        break;
+//                    }
+//                }
+//            }
+
+            for (Shot shot : shots) {
+                if (!shot.isDead ()) {
+                    moveShoot ( shot );
+                    collisionCheck ( shot );
                 }
             }
+
+
+
 
             if (left)
                 hero.setLayoutX ( hero.getLayoutX () - 6 );
             if (right)
                 hero.setLayoutX ( hero.getLayoutX () + 6 );
-            if (space && time > 5)
-                shoot ();
 
         }
     };
+
+    private void moveShoot ( Shot shot ) {
+        shot.setLayoutY ( shot.getLayoutY () - 10 );
+    }
 
 
     @Override
@@ -90,13 +104,14 @@ public class Main extends Application {
 
         anchorPane.getChildren ().addAll ( background, hero );
 
+        int count = 0;
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 20 ; j++) {
                 if (j == 6 || j == 13)
                     continue;
-                Enemy enemy = new Enemy ( new ImageView ( new Image ( "/resources/enemy" + i + ".png" ) ) , i , j );
-                enemies.add ( enemy );
-                anchorPane.getChildren ().add ( enemy.getImageView () );
+                Enemy enemy = new Enemy ( new Image ( "/resources/enemy" + i + ".png" ) , i , j );
+                enemies[count++] = enemy;
+                anchorPane.getChildren ().add ( enemy );
             }
         }
 
@@ -109,8 +124,6 @@ public class Main extends Application {
                 right = true;
             } else if (event.getCode() == KeyCode.LEFT)
                 left = true;
-            else if(event.getCode() == KeyCode.SPACE)
-               space = true;
         } );
 
         scene.setOnKeyReleased ( event -> {
@@ -119,7 +132,7 @@ public class Main extends Application {
             else if (event.getCode() == KeyCode.LEFT)
                 left = false;
             else if(event.getCode() == KeyCode.SPACE)
-                space = false;
+                shoot ();
         } );
 
         animationTimer.start ();
@@ -128,40 +141,53 @@ public class Main extends Application {
 
     private void shoot () {
         time = 0;
-        Rectangle rectangle = new Rectangle (  );
-        shots.add ( rectangle );
-        rectangle.setWidth ( 5 );
-        rectangle.setHeight ( 20 );
-        rectangle.setFill ( Color.GREEN );
-        anchorPane.getChildren ().add ( rectangle );
-        rectangle.setLayoutX ( hero.getLayoutX () + hero.getFitWidth ()/2 );
-        rectangle.setLayoutY ( hero.getLayoutY () - 10 );
+        Shot shot = new Shot (  );
+        shots.add ( shot );
+        shot.setWidth ( 5 );
+        shot.setHeight ( 20 );
+        shot.setFill ( Color.GREEN );
+        anchorPane.getChildren ().add ( shot );
+        shot.setLayoutX ( hero.getLayoutX () + hero.getFitWidth ()/2 );
+        shot.setLayoutY ( hero.getLayoutY () - 10 );
     }
 
     public static void main(String[] args) {
         launch(args);
     }
 
+    private void collisionCheck (Shot shot) {
+        for (int i = 0; i < enemies.length; i++) {
+            if (enemies[i] != null) {
+                if (shot.getBoundsInParent ().intersects ( enemies[i].getBoundsInParent () )) {
+                    enemies[i].setVisible ( false );
+                    enemies[i] = null;
+                    System.out.println ( ++score );
+                    shot.setDead ();
+                    anchorPane.getChildren ().remove ( shot );
+                    break;
+                }
+            }
+        }
+    }
+
 }
 
-class Enemy extends Pane {
-    ImageView imageView;
+class Enemy extends ImageView {
+    public Enemy ( Image image, int i, int j ) {
+        setImage ( image );
+        setPreserveRatio ( true );
+        setFitWidth ( 50 );
+        setLayoutY ( (i+1) * getFitWidth () ); //getFitHeight doesn't exist now
+        setLayoutX ( (j+1) * getFitWidth () );
+    }
+
+}
+
+class Shot extends Rectangle {
     boolean isDead;
 
-    public Enemy ( ImageView imageView , int i, int j ) {
-        imageView.setPreserveRatio ( true );
-        imageView.setFitWidth ( 50 );
-        imageView.setLayoutY ( (i+1) * imageView.getFitWidth () ); //getFitHeight doesn't exist now
-        imageView.setLayoutX ( (j+1) * imageView.getFitWidth () );
-        this.imageView = imageView;
-    }
-
-    public ImageView getImageView () {
-        return imageView;
-    }
-
-    public void setDead ( boolean dead ) {
-        isDead = dead;
+    public void setDead (  ) {
+        isDead = true;
     }
 
     public boolean isDead () {
