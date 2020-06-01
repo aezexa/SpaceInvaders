@@ -3,16 +3,19 @@ package main;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.effect.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.media.AudioClip;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class Main extends Application {
 
@@ -24,6 +27,9 @@ public class Main extends Application {
     double time;
     double enemyTime;
     int score;
+    Label scoreLabel;
+    public static AudioClip shotSound = new AudioClip ( new File ( "src/resources/shot.wav" ).toURI ().toString () );
+    public static AudioClip destroyedSound = new AudioClip ( new File ( "src/resources/destroyed.wav" ).toURI ().toString () );
 
     AnimationTimer animationTimer = new AnimationTimer ( ) {
         @Override
@@ -77,7 +83,16 @@ public class Main extends Application {
         hero.setFitWidth ( 50 );
         hero.setLayoutY ( 750 );
 
-        anchorPane.getChildren ().addAll ( background, hero );
+        scoreLabel = new Label ( "Points : " );
+        scoreLabel.setLayoutX ( 15 );
+        scoreLabel.setLayoutY ( 15 );
+        scoreLabel.setStyle ( "-fx-font-size: 20");
+        scoreLabel.setTextFill ( Color.GREEN );
+        scoreLabel.getStylesheets ().add ( "/resources/fontStyle.css" );
+
+        anchorPane.getChildren ().addAll ( background, scoreLabel, hero );
+
+
 
         int count = 0;
         for (int i = 0; i < 3; i++) {
@@ -85,6 +100,7 @@ public class Main extends Application {
                 if (j == 6 || j == 13)
                     continue;
                 Enemy enemy = new Enemy ( new Image ( "/resources/enemy" + i + ".png" ) , i , j );
+                setEnemyColors (i , enemy);
                 enemies[count++] = enemy;
                 anchorPane.getChildren ().add ( enemy );
             }
@@ -114,6 +130,24 @@ public class Main extends Application {
 
     }
 
+    private void setEnemyColors ( int i, Enemy enemy) {
+        if (i == 0)
+            setEnemyLighting ( Color.GREEN , enemy );
+        else if (i == 1)
+            setEnemyLighting ( Color.RED , enemy );
+    }
+
+    private void setEnemyLighting (Color color, Enemy enemy) {
+        Lighting lighting = new Lighting();
+        lighting.setDiffuseConstant(1.0);
+        lighting.setSpecularConstant(0.0);
+        lighting.setSpecularExponent(0.0);
+        lighting.setSurfaceScale(0.0);
+        lighting.setLight(new Light.Distant(45, 45, color));
+
+        enemy.setEffect ( lighting );
+    }
+
     private void shoot () {
         time = 0;
         Shot shot = new Shot (  );
@@ -124,6 +158,7 @@ public class Main extends Application {
         anchorPane.getChildren ().add ( shot );
         shot.setLayoutX ( hero.getLayoutX () + hero.getFitWidth ()/2 );
         shot.setLayoutY ( hero.getLayoutY () - 10 );
+        shotSound.play ();
     }
 
     public static void main(String[] args) {
@@ -135,10 +170,17 @@ public class Main extends Application {
             if (enemies[i] != null) {
                 if (shot.getBoundsInParent ().intersects ( enemies[i].getBoundsInParent () )) {
                     enemies[i].setVisible ( false );
+//                    if (enemies[i].getLevel () == 0)
+//                        scoreLabel.setText ( "Points : " + (score += 498 * 3) );
+//                    else if (enemies[i].getLevel () == 1)
+//                        scoreLabel.setText ( "Points : " + (score += 498 * 2) );
+//                    else
+//                        scoreLabel.setText ( "Points : " + (score += 498) );
+                    scoreLabel.setText ( "Points : " + ++score );
                     enemies[i] = null;
-                    System.out.println ( ++score );
                     shot.setDead ();
                     anchorPane.getChildren ().remove ( shot );
+                    destroyedSound.play ();
                     break;
                 }
             }
@@ -148,7 +190,10 @@ public class Main extends Application {
 }
 
 class Enemy extends ImageView {
+    private int level;
+
     public Enemy ( Image image, int i, int j ) {
+        level = i;
         setImage ( image );
         setPreserveRatio ( true );
         setFitWidth ( 50 );
@@ -156,6 +201,9 @@ class Enemy extends ImageView {
         setLayoutX ( (j+1) * getFitWidth () );
     }
 
+    public int getLevel () {
+        return level;
+    }
 }
 
 class Shot extends Rectangle {

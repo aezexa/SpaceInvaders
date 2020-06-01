@@ -1,0 +1,7 @@
+@font-face {
+src: url(Fleftex_M.ttf);
+}
+
+.label {
+-fx-font-family: 'Fleftex';
+}
